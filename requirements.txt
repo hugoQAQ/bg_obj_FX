@@ -1,0 +1,5 @@
+torch>=1.7.0
+numpy>=1.18.0
+opencv-python>=4.1.0
+# detectron2 installation instructions:
+# Follow the instructions at https://detectron2.readthedocs.io/en/latest/tutorials/install.html 
