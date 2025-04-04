@@ -55,6 +55,45 @@ class CustomPredictor(DefaultPredictor):
                 result.objectness_scores = objectness_scores
         
         return results, kept_indices
+    
+    def batch_inference(self, batch_imgs):
+        """Run inference on a batch of images.
+        
+        Args:
+            batch_imgs: List of numpy arrays, each representing an image
+            
+        Returns:
+            List of outputs for each image
+        """
+        outputs = []
+        
+        # Process each image with proper CUDA memory management
+        with torch.cuda.amp.autocast(enabled=self.model.device.type == "cuda"):
+            for img in batch_imgs:
+                # Convert to the format expected by the model
+                height, width = img.shape[:2]
+                img = img.astype("float32")
+                
+                # Preprocess the image the same way as in __call__
+                if self.input_format == "RGB":
+                    # OpenCV uses BGR, so we need to convert from RGB to BGR
+                    img = img[:, :, ::-1]
+                    
+                # Create a tensor from the image
+                img = torch.as_tensor(img.transpose(2, 0, 1))
+                
+                inputs = {"image": img, "height": height, "width": width}
+                
+                # Run model inference
+                with torch.no_grad():
+                    predictions = self.model([inputs])[0]
+                    
+                outputs.append(predictions)
+                
+                # Clean up temporary tensors
+                del img, inputs
+                
+        return outputs
 
 # Example usage
 def main():
